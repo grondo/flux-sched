@@ -38,7 +38,8 @@ env:
   - TAP_DRIVER_QUIET=1
   - DOCKERREPO=fluxrm/flux-sched
   - DOCKER_USERNAME=travisflux
-  - secure: "r/VnyLaR1NPcErRnfktopohrMPo8GSJokJiQwDr2XDrglPiL4T7Qppu42ihdvtWd3U3ZYFYLImeqipZqqz7+rhWxvao6k+NTAyQWkrsAmfC8B2czUR52ozcDF3jV2C4EJth/xlzsx54Gy7YNUEITfnUbnHCZ+/FmXXjuAyEPJ3c="
+  - secure: "e6oMilmf1sa4cBhpvL0k5BjFlaBR/o8721TCTRSWy+fEsjqbQ24NtOnxxrkpIY1qL0EZ4hRY1Eacv4TViLsN7c1IkLLlojJPoLeuuwuKZ73ratjVhjMB5zo/mPackHfaEgr94W7WV17DdtLNeNl99Ekh1tYmmwSDT04IKM2DkTE="
+
 
 cache:
   directories:
@@ -51,7 +52,7 @@ before_install:
   #  Tag image if this build is on master or result of a tag:
   - |
    if test "$DOCKER_TAG" = "t" \
-     -a "$TRAVIS_REPO_SLUG" = "flux-framework/flux-sched" \
+     -a "$TRAVIS_REPO_SLUG" = "grondo/flux-sched" \
      -a "$TRAVIS_PULL_REQUEST" = "false" \
      -a \( "$TRAVIS_BRANCH" = "master" -o -n "$TRAVIS_TAG" \); then
       export TAGNAME="${DOCKERREPO}:${IMG}-${TRAVIS_TAG:-latest}"
