@@ -13,6 +13,7 @@ queue_rules:
       - status-success="el8"
       - status-success="fedora33"
       - status-success="fedora34"
+      - status-success="fedora35"
       - status-success="coverage"
       - label="merge-when-passing"
       - label!="work-in-progress"
