@@ -70,8 +70,9 @@ struct jobmeta_t {
         now = t;
         jobid = id;
         alloc_type = alloc;
+        const auto now = std::chrono::system_clock::now();
         int64_t g_duration = std::chrono::duration_cast<std::chrono::seconds>
-            (graph_duration.graph_end - graph_duration.graph_start).count ();
+            (graph_duration.graph_end - now).count ();
 
         if (g_duration <= 0) {
             errno = EINVAL;
