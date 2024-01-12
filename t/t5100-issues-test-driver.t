@@ -19,8 +19,7 @@ if test -z "$T5100_ISSUES_GLOB"; then
 fi
 
 flux bulksubmit -n1 -o pty --job-name={./%} -t 10m \
-	--flags=waitable \
-	--quiet --watch  \
+	--quiet --watch  --label-io \
 	flux start {} \
 	::: ${SHARNESS_TEST_SRCDIR}/issues/${T5100_ISSUES_GLOB}
 

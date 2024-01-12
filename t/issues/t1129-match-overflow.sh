@@ -41,3 +41,8 @@ log "Running test job."
 flux run -vvv -N${TEST_SIZE} -n${TEST_SIZE} \
 	--setattr=exec.test.run_duration=1ms \
 	true
+
+log "reloading sched-simple..."
+flux module remove sched-fluxion-qmanager
+flux module remove sched-fluxion-resource
+flux module load sched-simple
