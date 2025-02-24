@@ -15,6 +15,7 @@ extern "C" {
 }
 
 #include "resource/traversers/dfu_impl.hpp"
+#include <readers/resource_reader_factory.hpp>
 
 using namespace Flux::Jobspec;
 using namespace Flux::resource_model;
@@ -901,6 +902,44 @@ int dfu_impl_t::mark (std::set<int64_t> &ranks, resource_pool_t::status_t status
             ++total;
         }
         m_graph_db->metadata.update_node_stats (total, status);
+    } catch (std::out_of_range &) {
+        errno = ENOENT;
+        return -1;
+    }
+    return 0;
+}
+
+int dfu_impl_t::shrink (std::set<int64_t> &ranks)
+{
+    std::shared_ptr<resource_reader_base_t> rd;
+    if ((rd = create_resource_reader ("jgf")) == nullptr)
+        return -1;
+
+    try {
+        std::map<int64_t, std::vector<vtx_t>>::iterator vit;
+        std::string subtree_path = "", tmp_path = "";
+        subsystem_t dom = m_match->dom_subsystem ();
+        vtx_t subtree_root;
+
+        for (auto &rank : ranks) {
+            // Now iterate through subgraphs keyed by rank and
+            // remove them.
+            vit = m_graph_db->metadata.by_rank.find (rank);
+            if (vit == m_graph_db->metadata.by_rank.end ())
+                continue;
+
+            subtree_root = vit->second.front ();
+            subtree_path = (*m_graph)[subtree_root].paths.at (dom);
+            for (vtx_t v : vit->second) {
+                // The shortest path string is the subtree root.
+                tmp_path = (*m_graph)[v].paths.at (dom);
+                if (tmp_path.length () < subtree_path.length ()) {
+                    subtree_path = tmp_path;
+                    subtree_root = v;
+                }
+            }
+            rd->remove_subgraph (*m_graph, m_graph_db->metadata, subtree_path);
+        }
     } catch (std::out_of_range &) {
         errno = ENOENT;
         return -1;

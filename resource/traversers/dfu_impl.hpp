@@ -324,6 +324,8 @@ class dfu_impl_t {
      */
     int mark (std::set<int64_t> &ranks, resource_pool_t::status_t status);
 
+    int shrink (std::set<int64_t> &ranks);
+
    private:
     /************************************************************************
      *                                                                      *

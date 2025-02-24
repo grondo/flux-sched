@@ -1258,23 +1258,56 @@ done:
     return rc;
 }
 
+static int shrink_resources (std::shared_ptr<resource_ctx_t> &ctx, const char *ids)
+{
+    int rc = -1;
+    std::set<int64_t> ranks;
+
+    if (!ids) {
+        errno = EINVAL;
+        goto done;
+    }
+    if ((rc = decode_rankset (ctx, ids, ranks)) < 0)
+        goto done;
+    if ((rc = ctx->traverser->shrink (ranks))) {
+        flux_log (ctx->h,
+                  LOG_ERR,
+                  "shrink %s failed: %s",
+                  ids,
+                  ctx->traverser->err_message ().c_str ());
+        goto done;
+    }
+    // Update total counts:
+    ctx->traverser->initialize ();
+    flux_log (ctx->h,
+              LOG_DEBUG,
+              "successfully removed rank%s %s from resource set",
+              ranks.size () > 1 ? "s" : "",
+              ids);
+done:
+    return rc;
+}
+
 static void update_resource (flux_future_t *f, void *arg)
 {
     int rc = -1;
     const char *up = NULL;
     const char *down = NULL;
+    const char *shrink = NULL;
     double expiration = -1.;
     json_t *resources = NULL;
     std::shared_ptr<resource_ctx_t> ctx = getctx ((flux_t *)arg);
 
     if ((rc = flux_rpc_get_unpack (f,
-                                   "{s?:o s?:s s?:s s?:F}",
+                                   "{s?:o s?:s s?:s s?:s s?:F}",
                                    "resources",
                                    &resources,
                                    "up",
                                    &up,
                                    "down",
                                    &down,
+                                   "shrink",
+                                   &shrink,
                                    "expiration",
                                    &expiration))
         < 0) {
@@ -1284,6 +1317,10 @@ static void update_resource (flux_future_t *f, void *arg)
     }
     if ((rc = update_resource_db (ctx, resources, up, down)) < 0) {
         flux_log_error (ctx->h, "%s: update_resource_db", __FUNCTION__);
+        goto done;
+    }
+    if (shrink && shrink_resources (ctx, shrink) < 0) {
+        flux_log (ctx->h, LOG_ERR, "failed to shrink targets=%s", shrink);
         goto done;
     }
     if (expiration >= 0.) {

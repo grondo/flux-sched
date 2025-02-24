@@ -509,6 +509,12 @@ int dfu_traverser_t::mark (std::set<int64_t> &ranks, resource_pool_t::status_t s
     return detail::dfu_impl_t::mark (ranks, status);
 }
 
+int dfu_traverser_t::shrink (std::set<int64_t> &ranks)
+{
+    clear_err_message ();
+    return detail::dfu_impl_t::shrink (ranks);
+}
+
 /*
  * vi:tabstop=4 shiftwidth=4 expandtab
  */
