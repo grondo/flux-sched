@@ -844,11 +844,19 @@ int dfu_impl_t::remove (vtx_t root,
     m_color.reset ();
     if (root_has_jtag) {
         rc = mod_dfv (root, jobid, mod_data);
+        if (rc < 0) {
+            m_err_msg += __FUNCTION__;
+            m_err_msg += ": mod_dfv() failed";
+        }
         // Was the root vertex's job tag removed? If so, full_cancel
         full_cancel =
             ((*m_graph)[root].idata.tags.find (jobid) == (*m_graph)[root].idata.tags.end ());
     } else {
         rc = mod_exv (jobid, mod_data);
+        if (rc < 0) {
+            m_err_msg += __FUNCTION__;
+            m_err_msg += ": mod_exv() failed";
+        }
     }
 
     return rc;
