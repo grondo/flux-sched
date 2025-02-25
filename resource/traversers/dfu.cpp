@@ -515,6 +515,12 @@ int dfu_traverser_t::shrink (std::set<int64_t> &ranks)
     return detail::dfu_impl_t::shrink (ranks);
 }
 
+int dfu_traverser_t::find_jobids (std::set<int64_t> &ranks, std::set<int64_t> &ids)
+{
+    clear_err_message ();
+    return detail::dfu_impl_t::find_jobids (ranks, ids);
+}
+
 /*
  * vi:tabstop=4 shiftwidth=4 expandtab
  */

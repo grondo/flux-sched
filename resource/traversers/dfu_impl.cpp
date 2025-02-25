@@ -1280,6 +1280,20 @@ done:
     return (rc >= 0) ? 0 : -1;
 }
 
+int dfu_impl_t::find_jobids (std::set<int64_t> &ranks, std::set<int64_t> &ids)
+{
+    resource_graph_metadata_t &m = m_graph_db->metadata;
+
+    for (const int64_t &rank : ranks) {
+        auto rank_vector = m.by_rank.find (rank);
+        for (const vtx_t &vtx : rank_vector->second) {
+            for (auto const &kv : (*m_graph)[vtx].idata.tags)
+                ids.insert (kv.first);
+        }
+    }
+    return 0;
+}
+
 /*
  * vi:tabstop=4 shiftwidth=4 expandtab
  */
