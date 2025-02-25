@@ -1258,6 +1258,58 @@ done:
     return rc;
 }
 
+static int partial_cancel_by_ranks (std::shared_ptr<resource_ctx_t> &ctx,
+                                    const char *ranks,
+                                    std::set<int64_t> &rank_set)
+{
+    int rc = -1;
+    json_t *R_to_cancel = NULL;
+    char *R_str = NULL;
+    bool full_cancel = false;
+    std::shared_ptr<resource_reader_base_t> reader;
+    std::set<int64_t> ids;
+
+    /* Create a fake Rv1 object with just the ranks in question and
+     * pass to remove() with an rv1exec reader. This will cancel the
+     * job on the ranks which are being shrunk.
+     */
+    if (!(R_to_cancel =
+              json_pack ("{s:i s:{s:{s:s}}}", "version", 1, "execution", "R_lite", "ranks", ranks))
+        || !(R_str = json_dumps (R_to_cancel, 0)))
+        return -1;
+
+    if ((reader = create_resource_reader ("rv1exec")) == nullptr) {
+        flux_log (ctx->h, LOG_ERR, "%s: error creating rv1exec reader", __FUNCTION__);
+        goto out;
+    }
+    ctx->traverser->find_jobids (rank_set, ids);
+    for (auto &jobid : ids) {
+        flux_log (ctx->h,
+                  LOG_INFO,
+                  "%s: calling remove(id=%ju, ranks=%s)",
+                  __FUNCTION__,
+                  jobid,
+                  ranks);
+        rc = ctx->traverser->remove (R_str, reader, jobid, full_cancel);
+        if (rc < 0) {
+            flux_log (ctx->h,
+                      LOG_ERR,
+                      "%s: failed to remove %ju on ranks %s: %s",
+                      __FUNCTION__,
+                      jobid,
+                      ranks,
+                      ctx->traverser->err_message ().c_str ());
+            // goto out;
+        }
+    }
+    // ignore errors for now for testing
+    rc = 0;
+out:
+    json_decref (R_to_cancel);
+    free (R_str);
+    return rc;
+}
+
 static int shrink_resources (std::shared_ptr<resource_ctx_t> &ctx, const char *ids)
 {
     int rc = -1;
@@ -1269,6 +1321,10 @@ static int shrink_resources (std::shared_ptr<resource_ctx_t> &ctx, const char *i
     }
     if ((rc = decode_rankset (ctx, ids, ranks)) < 0)
         goto done;
+    if (partial_cancel_by_ranks (ctx, ids, ranks) < 0) {
+        flux_log (ctx->h, LOG_ERR, "partial_cancel_by_ranks (\"%s\") failed", ids);
+        goto done;
+    }
     if ((rc = ctx->traverser->shrink (ranks))) {
         flux_log (ctx->h,
                   LOG_ERR,
